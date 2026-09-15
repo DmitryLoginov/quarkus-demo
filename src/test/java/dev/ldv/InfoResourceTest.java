@@ -17,7 +17,7 @@ public class InfoResourceTest {
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("name", is("book-catalog"))
+                .body("name", is("book-catalog-test"))
                 .body("framework", is("Quarkus"));
     }
 }

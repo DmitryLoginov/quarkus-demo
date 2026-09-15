@@ -35,3 +35,14 @@ Response:
   "framework": "Quarkus"
 }
 ```
+
+## Components
+
+* `InfoResource` - HTTP-layer
+* `InfoService` - business logic
+* `CatalogConfig` - configuration properties
+
+## Profiles
+
+* dev - profile for development mode
+* test - profile for testing

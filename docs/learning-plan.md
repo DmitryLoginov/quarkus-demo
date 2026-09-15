@@ -94,14 +94,19 @@ curl.exe -i http://localhost:8080/api/info
 **ТЗ:**
 
 - [ ] Проверить доступность Docker через `docker info`; если он недоступен, согласовать локальную PostgreSQL перед настройкой подключения.
-- [ ] Подключить `quarkus-hibernate-orm-panache`, `quarkus-jdbc-postgresql`, `quarkus-flyway` и требуемый выбранной версией Flyway модуль PostgreSQL согласно руководству.
-- [ ] Настроить PostgreSQL Dev Services, зафиксировать версию образа в настройках. Тесты используют отдельную учебную БД.
+- [ ] Подключить `io.quarkus:quarkus-hibernate-orm-panache`, `io.quarkus:quarkus-jdbc-postgresql`, `io.quarkus:quarkus-flyway` и `org.flywaydb:flyway-database-postgresql`. Версии зависимостей согласуются через Quarkus BOM. Отдельная прямая зависимость `quarkus-hibernate-orm` не нужна, она входит в Panache.
+- [ ] Настроить PostgreSQL Dev Services: указать `quarkus.datasource.db-kind`, задать явный версионный тег образа в `quarkus.datasource.devservices.image-name` (не `latest`) и записать выбранный тег в README. Для dev/test не задавать JDBC URL к внешней БД: подключение выдаёт Dev Services. Тесты используют отдельную учебную БД.
 - [ ] Создать миграцию `src/main/resources/db/migration/V1__create_books.sql`: таблица `books`, первичный ключ и генерация id, NOT NULL, длины строк и ограничение года из контракта.
-- [ ] Flyway применяет миграции при запуске; Hibernate проверяет схему (`validate`), а не создаёт её. Согласовать стратегию генерации id между entity и SQL.
-- [ ] Создать `Book` и `BookRepository` на основе `PanacheRepository<Book>`.
-- [ ] Добавить проверку сохранения и чтения книги через репозиторий в PostgreSQL; использовать откат тестовой транзакции для изоляции.
+- [ ] Flyway применяет миграции при запуске (`quarkus.flyway.migrate-at-start`); Hibernate проверяет схему через `quarkus.hibernate-orm.schema-management.strategy=validate`. Автоматическое создание/обновление схемы Hibernate отключено. Согласовать стратегию генерации id между entity и SQL.
+- [ ] Создать `src/main/java/dev/ldv/book/Book.java`: обычная JPA entity, таблица `books`, поля `id: Long`, `title: String`, `author: String`, `publicationYear: Integer` по общему контракту. Колонку года явно назвать `publication_year`. Можно выбрать IDENTITY либо SEQUENCE, но настройки Java и миграция должны соответствовать друг другу.
+- [ ] Создать `src/main/java/dev/ldv/book/BookRepository.java`: CDI-bean с `@ApplicationScoped`, реализующий `PanacheRepository<Book>`. HTTP-операции с книгами появятся на этапе 4.
+- [ ] Добавить `src/test/java/dev/ldv/book/BookRepositoryTest.java` с `@QuarkusTest`: внедрить репозиторий и проверить сохранение/чтение через настоящую PostgreSQL. Для отката изменений этого тестового метода использовать `io.quarkus.test.TestTransaction`.
+- [ ] В тесте создать корректную книгу, сохранить, выполнить flush и clear persistence context, затем прочитать по полученному id и проверить все поля. Не предполагать, что первый id равен 1. Существующий HTTP-тест `/api/info` также должен проходить.
+- [ ] Дополнить README: выбранный образ PostgreSQL, запуск Docker/Dev Services, ответственность Flyway и Hibernate, проверка миграции. Заодно закрыть небольшое дополнение N2 этапа 2: указать Resource → Service → Config и `book-catalog` / `book-catalog-test`.
 
-**Приёмка:** тест сохраняет книгу, получает сгенерированный id и читает поля из БД; полезно выполнить flush/clear, чтобы проверить ORM-маппинг, а не только объект в памяти. На чистой БД миграция создаёт схему, повторный запуск не применяет V1 повторно. После применения миграцию не переписываем: изменения схемы — новая версия.
+**Приёмка:** `.\mvnw.cmd test` выполняет HTTP-тест и тест репозитория без ошибок. Тест сохраняет книгу, получает сгенерированный id и читает поля из БД после flush/clear; тестовые изменения откатываются. На чистой БД миграция создаёт схему, Hibernate validate проходит. Повторный вызов миграции на той же БД не применяет V1 повторно: подтвердить журналом Flyway или его schema history (это можно проверить в одной dev-сессии; новый контейнер может иметь новую БД). После применения миграцию не переписываем: изменения схемы — новая версия.
+
+**Материалы для проверки:** [Hibernate schema management](https://quarkus.io/guides/hibernate-orm/#hibernate-orm-in-development-mode), [тестовые транзакции](https://quarkus.io/guides/getting-started-testing/#tests-and-transactions). `validate` проверяет соответствие маппинга схеме, но не заменяет проверку всех бизнес-ограничений SQL.
 
 ## Этап 4. Создание и чтение книг
 

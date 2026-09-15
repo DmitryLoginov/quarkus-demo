@@ -8,9 +8,15 @@ import jakarta.ws.rs.core.MediaType;
 @Path("/api/info")
 public class InfoResource {
 
+    private final InfoService infoService;
+
+    public InfoResource(InfoService infoService) {
+        this.infoService = infoService;
+    }
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Info info() {
-        return new Info("book-catalog", "Quarkus");
+        return infoService.getInfo();
     }
 }
