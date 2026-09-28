@@ -36,7 +36,7 @@ Response:
 }
 ```
 
-## Components
+### Components
 
 * `InfoResource` - HTTP-layer
 * `InfoService` - business logic
@@ -46,7 +46,7 @@ Invocation chain:
 
 `InfoResource` -> `InfoService` -> `CatalogConfig`
 
-## Profiles
+### Profiles
 
 * dev - profile for development mode. `InfoResource` returns *book-catalog* for `name`
 * test - profile for testing. `InfoResource` returns *book-catalog-test* for `name`
@@ -65,7 +65,7 @@ Application is using volumes **in dev mode** to preserve database data and reuse
 
 Application is using Flyway as database migration tool.
 
-As application uses volumes for dev mode, Flyway migrations apply only once at startup.
+As application uses volumes for dev mode, Flyway checks history of migrations and applies new migrations at every start.
 
 However, application creates new clean temporary database when running tests.
 Test containers are not reusable.
@@ -73,3 +73,79 @@ Test containers are not reusable.
 ### Hibernate
 
 Application is using Hibernate for mapping objects to database.
+Schema management strategy is *validate*, which means that Hibernate doesn't change or create schema, but only validates existing schema.
+
+## Books Endpoints
+
+`GET /books/{id}`:
+
+Path params:
+* `id` - book id
+
+Response example (200):
+
+```json
+{
+  "id": 1,
+  "title": "Title",
+  "author": "Author",
+  "publicationYear": 2000
+}
+```
+
+Endpoint returns 404 when book with given id is not found.
+
+`POST /books`:
+
+Request body example:
+
+```json
+{
+  "title": "Title",
+  "author": "Author",
+  "publicationYear": 2000
+}
+```
+
+Response example (201):
+
+```json
+{
+  "id": 1,
+  "title": "Title",
+  "author": "Author",
+  "publicationYear": 2000
+}
+```
+
+Successful response also has `Location` header with relative URI of new book.
+
+`GET /books`:
+
+Response example (200):
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "title": "Title",
+      "author": "Author",
+      "publicationYear": 2000
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "total": 1
+}
+```
+
+### Components
+
+* `BookResource` - HTTP layer
+* `BookService` - business logic and transactions
+* `BookRepository` - database layer
+
+Invocation chain:
+
+`BookResource` -> `BookService` -> `BookRepository`

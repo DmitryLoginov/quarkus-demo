@@ -5,11 +5,13 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Entity
 @Table(name = "books")
 @Getter
 @Setter
+@ToString
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
