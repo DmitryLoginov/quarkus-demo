@@ -4,6 +4,7 @@ import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -57,6 +58,36 @@ public class BookService {
                 count);
     }
 
+    @Transactional
+    public Optional<BookResponse> updateBook(Long id, UpdateBookRequest updateBookRequest) {
+        Optional<Book> maybeBook = bookRepository.findByIdOptional(id);
+
+        if (maybeBook.isEmpty()) {
+            log.debug("Book with id {} not found", id);
+            return Optional.empty();
+        }
+
+        Book book = maybeBook.get();
+
+        log.debug("Book found: {}", book);
+
+        updateBookFields(book, updateBookRequest);
+        log.debug("Book updated: {}", book);
+
+        return Optional.of(toResponse(book));
+    }
+
+    @Transactional
+    public boolean deleteBook(Long id) {
+        if (bookRepository.findByIdOptional(id).isEmpty()) {
+            log.debug("Book with id {} not found", id);
+            return false;
+        }
+
+        bookRepository.deleteById(id);
+        return true;
+    }
+
     private Book fromRequest(CreateBookRequest createBookRequest) {
         Book book = new Book();
 
@@ -74,5 +105,11 @@ public class BookService {
                 book.getAuthor(),
                 book.getPublicationYear()
         );
+    }
+
+    private void updateBookFields(Book book, UpdateBookRequest updateBookRequest) {
+        book.setTitle(updateBookRequest.title());
+        book.setAuthor(updateBookRequest.author());
+        book.setPublicationYear(updateBookRequest.publicationYear());
     }
 }

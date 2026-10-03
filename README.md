@@ -120,6 +120,9 @@ Response example (201):
 
 Successful response also has `Location` header with relative URI of new book.
 
+In case of invalid field values server returns 400 with list of violations.
+
+
 `GET /books`:
 
 Response example (200):
@@ -137,6 +140,67 @@ Response example (200):
   "page": 0,
   "size": 20,
   "total": 1
+}
+```
+
+`PUT /books/{id}`
+
+Path params:
+* `id` - book id
+
+* Request body example:
+
+```json
+{
+  "title": "Title",
+  "author": "Author",
+  "publicationYear": 2000
+}
+```
+
+Response example (200):
+
+```json
+{
+  "id": 1,
+  "title": "Title",
+  "author": "Author",
+  "publicationYear": 2000
+}
+```
+
+In case of invalid field values server returns 400 with list of violations.
+
+If target book was not found, server returns 404.
+
+`DELETE /books/{id}`
+
+Path params:
+* `id` - book id
+
+In case of successful removal server returns 204 without body.
+
+#### Common error format
+
+Error examples:
+
+```json
+{
+  "code": "NOT_FOUND",
+  "message": "Book with id 999 not found",
+  "violations": []
+}
+```
+```json
+{
+  "code": "VALIDATION_ERROR",
+  "message": "Validation error: body entity has constraint violations",
+  "violations": [
+    {
+      "field": "publicationYear",
+      "message": "must be greater than zero"
+    }
+  ]
 }
 ```
 
